@@ -77,7 +77,7 @@ public class TextEditorGUI {
 
         String text = textPane.getText();
         int idx = 0;  // Use index to keep track of current processing location of the text
-        for (String word : text.split("\\W")) {
+        for (String word : text.split("\\W+")) {
             if (!legalDic.hasWord(word.toLowerCase())) {
                 int length = word.length();
                 doc.setCharacterAttributes(idx, length, style, false);
