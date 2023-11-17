@@ -69,24 +69,93 @@ public class TextEditorGUI {
     }
 
     private void highlightMisspelledWords() {
-        // Set the style that will highlight the wrong words later
+        // Retrieve the document from the text pane for styling
         StyledDocument doc = textPane.getStyledDocument();
-        Style style = doc.addStyle("RedUnderline", null);
-        StyleConstants.setUnderline(style, true);
-        StyleConstants.setForeground(style, Color.RED);
 
+        // Define a red underline style for spelling errors
+        Style redStyle = doc.addStyle("RedUnderline", null);
+        StyleConstants.setUnderline(redStyle, true);
+        StyleConstants.setForeground(redStyle, Color.RED);
+
+        // Define a blue underline style for capitalization errors
+        Style blueStyle = doc.addStyle("BlueUnderline", null);
+        StyleConstants.setUnderline(blueStyle, true);
+        StyleConstants.setForeground(blueStyle, Color.BLUE);
+
+        // Define a green style for double words
+        Style greenStyle = doc.addStyle("GreenUnderline", null);
+        StyleConstants.setUnderline(greenStyle, false);
+        StyleConstants.setForeground(greenStyle, Color.GREEN);
+
+        // Get the entire text from the text pane
         String text = textPane.getText();
-        int idx = 0;  // Use index to keep track of current processing location of the text
+        // Index to keep track of the current location in the text
+        int idx = 0;
+        // Flags to track sentence boundaries
+        boolean isNewSentence = true;
+        boolean isDiffSentence = true;
+        // Variable to remember the previous word for double word detection
+        String prev = "";
+
+        // Split the text into words based on non-word characters
         for (String word : text.split("\\W+")) {
-            if (word.matches("^[a-zA-Z]+$") && !legalDic.hasWord(word.toLowerCase())) {
-                int length = word.length();
-                doc.setCharacterAttributes(idx, length, style, false);
+            // Check if the word contains only alphabetic characters
+            if (word.matches("^[a-zA-Z]+$")) {
+                // Determine if the word is mixed case or improperly capitalized
+                boolean isMixedCase = !word.equals(word.toLowerCase())
+                        && !word.equals(word.toUpperCase())
+                        && !(Character.isUpperCase(word.charAt(0))
+                        && word.substring(1).equals(word.substring(1).toLowerCase()));
+
+                // Check if the word should be capitalized (start of a new sentence)
+                boolean isStartOfSentenceError = isNewSentence && Character.isLowerCase(word.charAt(0));
+
+                // Apply blue underline style for capitalization errors
+                if (isMixedCase || isStartOfSentenceError) {
+                    int length = word.length();
+                    doc.setCharacterAttributes(idx, length, blueStyle, false);
+                }
+
+                // Check if the word is spelled correctly
+                if (!legalDic.hasWord(word.toLowerCase())) {
+                    int length = word.length();
+                    doc.setCharacterAttributes(idx, length, redStyle, false);
+                }
+
+                // Highlight double words in green
+                if (word.equalsIgnoreCase(prev) && !isDiffSentence) {
+                    int length = word.length();
+                    doc.setCharacterAttributes(idx, length, greenStyle, false);
+                }
             }
-            // Update idx to get the position of the start of next word
+
+            // Calculate the end index of the current word
+            int wordEnd = idx + word.length();
+            // Update idx to the position of the next word
             idx += word.length();
-            // Skipping non-word chars till the start of next word
-            while (idx < text.length() && !Character.isLetter(text.charAt(idx))) idx++;
+
+            // Skip non-letter characters to find the start of the next word
+            while (idx < text.length() && !Character.isLetter(text.charAt(idx))) {
+                idx++;
+            }
+
+            // Update isNewSentence based on punctuation
+            isNewSentence = (wordEnd < text.length() &&
+                    (text.charAt(wordEnd) == '.' ||
+                            text.charAt(wordEnd) == '!' ||
+                            text.charAt(wordEnd) == '?')) ||
+                    (wordEnd + 1 < text.length() &&
+                            text.substring(wordEnd, wordEnd + 2).matches("\\s+[.!?]"));
+
+            // Update isDiffSentence based on non-letter and non-digit characters
+            isDiffSentence = (wordEnd < text.length() &&
+                    !Character.isLetter(text.charAt(wordEnd)) &&
+                    !Character.isSpaceChar(text.charAt(wordEnd)));
+
+            // Reset previous word if the current character marks a different sentence
+            prev = isDiffSentence ? "" : word;
         }
+
     }
 
     public void display() {
