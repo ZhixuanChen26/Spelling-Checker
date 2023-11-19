@@ -1,16 +1,21 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 public class TextEditorGUI {
     private JFrame frame;
     private JTextPane textPane;
-    private JButton OpenButton, CheckButton, ExitButton;
+    private JButton OpenButton, CheckButton, ExitButton, SaveButton;
     private JScrollPane scrollPane;
     private JFileChooser fileChooser;
     private SysDictionary legalDic;
+
+    private boolean documentModified;
 
     public TextEditorGUI() {
         legalDic = new SysDictionary("words_alpha.txt");
@@ -25,16 +30,30 @@ public class TextEditorGUI {
         OpenButton = new JButton("File Selector");
         CheckButton = new JButton("Check");
         ExitButton = new JButton("Exit");
+        SaveButton = new JButton("Save");
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OpenButton);
         buttonPanel.add(CheckButton);
+        buttonPanel.add(SaveButton);
         buttonPanel.add(ExitButton);
 
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.add(scrollPane, BorderLayout.CENTER);
 
         fileChooser = new JFileChooser();
+
+        textPane.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                documentModified = true;
+            }
+            public void removeUpdate(DocumentEvent e) {
+                documentModified = true;
+            }
+            public void changedUpdate(DocumentEvent e) {
+                documentModified = true;
+            }
+        });
 
         OpenButton.addActionListener(new ActionListener() {
             @Override
@@ -58,14 +77,44 @@ public class TextEditorGUI {
                 highlightMisspelledWords();
             }
         });
+        
+        SaveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveDocument();
+            }
+        });
 
         ExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                frame.dispose();
+                if (documentModified) {
+                    int result = JOptionPane.showConfirmDialog(frame,
+                            "Document has unsaved changes. Do you want to exit without saving?",
+                            "Exit Confirmation", JOptionPane.YES_NO_OPTION);
+                    if (result == JOptionPane.YES_OPTION) {
+                        frame.dispose();
+                    }
+                } else {
+                    frame.dispose();
+                }
             }
         });
 
+    }
+
+    private void saveDocument() {
+        int returnValue = fileChooser.showSaveDialog(frame);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            Path fileToSave = fileChooser.getSelectedFile().toPath();
+            try {
+                Files.write(fileToSave, textPane.getText().getBytes());
+                // 更新文档状态为已保存
+                documentModified = false;
+            } catch (IOException exp) {
+                exp.printStackTrace();
+            }
+        }
     }
 
     private void highlightMisspelledWords() {
