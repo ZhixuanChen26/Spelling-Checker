@@ -10,7 +10,7 @@ import java.util.List;
 public class TextEditorGUI {
     private JFrame frame;
     private JTextPane textPane;
-    private JButton OpenButton, CheckButton, ExitButton, SaveButton;
+    private JButton OpenButton, CheckButton, ExitButton, SaveButton, HelpButton;
     private JScrollPane scrollPane;
     private JFileChooser fileChooser;
     private SysDictionary legalDic;
@@ -31,12 +31,14 @@ public class TextEditorGUI {
         CheckButton = new JButton("Check");
         ExitButton = new JButton("Exit");
         SaveButton = new JButton("Save");
+        HelpButton = new JButton("Help");
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OpenButton);
         buttonPanel.add(CheckButton);
         buttonPanel.add(SaveButton);
         buttonPanel.add(ExitButton);
+        buttonPanel.add(HelpButton);
 
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.add(scrollPane, BorderLayout.CENTER);
@@ -100,7 +102,38 @@ public class TextEditorGUI {
                 }
             }
         });
+        
+        HelpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showHelpWindow();
+            }
+        });
 
+    }
+
+    private void showHelpWindow() {
+        JDialog helpDialog = new JDialog(frame, "Help - Text Editor Features", false);
+        helpDialog.setSize(400, 300);
+        helpDialog.setLocationRelativeTo(frame); // 使帮助窗口相对于主窗口居中
+        helpDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // 关闭帮助窗口时不影响主窗口
+
+        JTextArea helpText = new JTextArea();
+        helpText.setText("Text Editor Features:\n\n" +
+                "- Open: Open a text file to edit.\n" +
+                "- Save: Save the current document.\n" +
+                "- Check: Highlight misspelled words.\n" +
+                "- Help: Display this help window.\n" +
+                "- Exit: Close the application.\n\n" +
+                "Remember to save your work before exiting!");
+        helpText.setEditable(false);
+        helpText.setWrapStyleWord(true);
+        helpText.setLineWrap(true);
+
+        JScrollPane helpScrollPane = new JScrollPane(helpText);
+        helpDialog.add(helpScrollPane);
+
+        helpDialog.setVisible(true);
     }
 
     private void saveDocument() {
