@@ -1,21 +1,23 @@
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
 public class TextEditorGUI {
     private JFrame frame;
     private JTextPane textPane;
-    private JButton OpenButton, CheckButton, ExitButton, SaveButton, HelpButton;
+    private JButton OpenButton, CheckButton, ExitButton, SaveButton;
     private JScrollPane scrollPane;
     private JFileChooser fileChooser;
     private SysDictionary legalDic;
-
-    private boolean documentModified;
+    private UserDictionary userDic = new UserDictionary();
+    private File currentFile;
 
     public TextEditorGUI() {
         legalDic = new SysDictionary("words_alpha.txt");
@@ -31,38 +33,25 @@ public class TextEditorGUI {
         CheckButton = new JButton("Check");
         ExitButton = new JButton("Exit");
         SaveButton = new JButton("Save");
-        HelpButton = new JButton("Help");
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OpenButton);
         buttonPanel.add(CheckButton);
-        buttonPanel.add(SaveButton);
         buttonPanel.add(ExitButton);
-        buttonPanel.add(HelpButton);
+        buttonPanel.add(SaveButton);
 
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.add(scrollPane, BorderLayout.CENTER);
 
         fileChooser = new JFileChooser();
-
-        textPane.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                documentModified = true;
-            }
-            public void removeUpdate(DocumentEvent e) {
-                documentModified = true;
-            }
-            public void changedUpdate(DocumentEvent e) {
-                documentModified = true;
-            }
-        });
-
+        setupContextMenu();
         OpenButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int returnValue = fileChooser.showOpenDialog(frame);
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     Path selectedFile = fileChooser.getSelectedFile().toPath();
+                    currentFile = fileChooser.getSelectedFile();
                     try {
                         String content = new String(Files.readAllBytes(selectedFile));
                         textPane.setText(content);
@@ -79,80 +68,95 @@ public class TextEditorGUI {
                 highlightMisspelledWords();
             }
         });
-        
-        SaveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveDocument();
-            }
-        });
 
         ExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (documentModified) {
-                    int result = JOptionPane.showConfirmDialog(frame,
-                            "Document has unsaved changes. Do you want to exit without saving?",
-                            "Exit Confirmation", JOptionPane.YES_NO_OPTION);
-                    if (result == JOptionPane.YES_OPTION) {
-                        frame.dispose();
+                frame.dispose();
+            }
+        });
+
+        SaveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveTextToFile(currentFile);
+            }
+        });
+    }
+
+    private void setupContextMenu() {
+        textPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int offset = textPane.viewToModel2D(e.getPoint());
+                    try {
+                        int wordStart = Utilities.getWordStart(textPane, offset);
+                        int wordEnd = Utilities.getWordEnd(textPane, offset);
+                        String selectWord = textPane.getDocument().getText(wordStart, wordEnd - wordStart);
+
+                        // Use the method in SysDictionary to generate suggestions for selected word
+                        List<String> suggestions;
+                        if (!legalDic.hasWord(selectWord.toLowerCase())) {
+                            suggestions = legalDic.suggestCorrections(selectWord.toLowerCase());
+                        } else {
+                            suggestions = new ArrayList<>();
+                            StringBuilder sb = new StringBuilder(selectWord.length());
+                            sb.append(Character.toUpperCase(selectWord.charAt(0)));
+                            sb.append(selectWord.substring(1).toLowerCase());
+                            suggestions.add(sb.toString());
+                            suggestions.add(selectWord.toUpperCase());
+                            suggestions.add(selectWord.toLowerCase());
+                        }
+
+                        JMenu suggestionsMenu = new JMenu("Suggestions");
+
+                        // Add suggestions to the submenu(child menu)
+                        for (String suggestion : suggestions) {
+                            JMenuItem suggestionItem = new JMenuItem(suggestion);
+                            suggestionItem.addActionListener(ae -> {
+                                try {
+                                    // Replace the current selected word with the suggestion user choose
+                                    textPane.getDocument().remove(wordStart, wordEnd - wordStart);
+                                    textPane.getDocument().insertString(wordStart, suggestion, null);
+                                } catch (BadLocationException ex) {
+                                    ex.printStackTrace();
+                                }
+                            });
+                            suggestionsMenu.add(suggestionItem);
+                        }
+
+                        // Create the parent(main) menu and add sub menu to main menu
+                        JPopupMenu parentMenu = new JPopupMenu();
+                        parentMenu.add(suggestionsMenu);
+
+                        // Create 'Add to Dictionary' menu item
+                        JMenuItem addToDicItem = new JMenuItem("Add to Dictionary");
+                        addToDicItem.addActionListener(ae -> {
+                            // Add the selected word to the user dictionary
+                            userDic.add(selectWord);
+                        });
+                        parentMenu.add(addToDicItem);
+
+                        // Show the context menu
+                        parentMenu.show(textPane, e.getX(), e.getY());
+                    } catch (BadLocationException ex) {
+                        ex.printStackTrace();
                     }
-                } else {
-                    frame.dispose();
                 }
             }
         });
-        
-        HelpButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showHelpWindow();
-            }
-        });
-
-    }
-
-    private void showHelpWindow() {
-        JDialog helpDialog = new JDialog(frame, "Help - Text Editor Features", false);
-        helpDialog.setSize(400, 300);
-        helpDialog.setLocationRelativeTo(frame); // 使帮助窗口相对于主窗口居中
-        helpDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // 关闭帮助窗口时不影响主窗口
-
-        JTextArea helpText = new JTextArea();
-        helpText.setText("Text Editor Features:\n\n" +
-                "- Open: Open a text file to edit.\n" +
-                "- Save: Save the current document.\n" +
-                "- Check: Highlight misspelled words.\n" +
-                "- Help: Display this help window.\n" +
-                "- Exit: Close the application.\n\n" +
-                "Remember to save your work before exiting!");
-        helpText.setEditable(false);
-        helpText.setWrapStyleWord(true);
-        helpText.setLineWrap(true);
-
-        JScrollPane helpScrollPane = new JScrollPane(helpText);
-        helpDialog.add(helpScrollPane);
-
-        helpDialog.setVisible(true);
-    }
-
-    private void saveDocument() {
-        int returnValue = fileChooser.showSaveDialog(frame);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            Path fileToSave = fileChooser.getSelectedFile().toPath();
-            try {
-                Files.write(fileToSave, textPane.getText().getBytes());
-                // 更新文档状态为已保存
-                documentModified = false;
-            } catch (IOException exp) {
-                exp.printStackTrace();
-            }
-        }
     }
 
     private void highlightMisspelledWords() {
         // Retrieve the document from the text pane for styling
         StyledDocument doc = textPane.getStyledDocument();
+
+        // Define a normal style to un-highlight the text after correction
+        Style normalStl = textPane.addStyle("NormalStyle", null);
+        StyleConstants.setForeground(normalStl, Color.BLACK);
+        StyleConstants.setUnderline(normalStl, false);
+        doc.setCharacterAttributes(0, doc.getLength(), normalStl, false);
 
         // Define a red underline style for spelling errors
         Style redStyle = doc.addStyle("RedUnderline", null);
@@ -166,7 +170,7 @@ public class TextEditorGUI {
 
         // Define a green style for double words
         Style greenStyle = doc.addStyle("GreenUnderline", null);
-        StyleConstants.setUnderline(greenStyle, false);
+        StyleConstants.setUnderline(greenStyle, true);
         StyleConstants.setForeground(greenStyle, Color.GREEN);
 
         // Get the entire text from the text pane
@@ -192,16 +196,16 @@ public class TextEditorGUI {
                 // Check if the word should be capitalized (start of a new sentence)
                 boolean isStartOfSentenceError = isNewSentence && Character.isLowerCase(word.charAt(0));
 
+                // Check if the word is spelled correctly. The order of how we highlight the different errors matters.
+                if (!legalDic.hasWord(word.toLowerCase()) && !userDic.hasWord(word)) {
+                    int length = word.length();
+                    doc.setCharacterAttributes(idx, length, redStyle, false);
+                }
+
                 // Apply blue underline style for capitalization errors
                 if (isMixedCase || isStartOfSentenceError) {
                     int length = word.length();
                     doc.setCharacterAttributes(idx, length, blueStyle, false);
-                }
-
-                // Check if the word is spelled correctly
-                if (!legalDic.hasWord(word.toLowerCase())) {
-                    int length = word.length();
-                    doc.setCharacterAttributes(idx, length, redStyle, false);
                 }
 
                 // Highlight double words in green
@@ -240,8 +244,18 @@ public class TextEditorGUI {
 
     }
 
-    public void display() {
+    private void display() {
         frame.setVisible(true);
+    }
+
+    private void saveTextToFile(File file) {
+        String content = textPane.getText(); // Get the current state of text from JTextPane
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write(content); // Write current state of text to the file to overwrite(save)
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Fail to save the file.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public static void main(String[] args) {
