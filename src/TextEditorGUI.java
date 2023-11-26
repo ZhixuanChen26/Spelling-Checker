@@ -23,6 +23,9 @@ public class TextEditorGUI {
 
     private static final String IGNORE_ONCE_ATTRIBUTE = "ignoreOnce";
 
+    private List<IgnoredWord> ignoredWordList = new ArrayList<>();
+
+
 
 
     public TextEditorGUI() {
@@ -52,6 +55,8 @@ public class TextEditorGUI {
 
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.add(scrollPane, BorderLayout.CENTER);
+
+
 
         fileChooser = new JFileChooser();
         setupContextMenu();
@@ -204,15 +209,18 @@ Sizr
                                     int wordEnd = Utilities.getWordEnd(textPane, offset);
                                     String selectedWord = textPane.getDocument().getText(wordStart, wordEnd - wordStart);
 
-
-                                    // 先删除选中的单词
-                                    textPane.getDocument().remove(wordStart, wordEnd - wordStart);
-
-                                    // 重新插入该单词，并应用特殊样式
-                                    Style ignoreStyle = textPane.addStyle(IGNORE_ONCE_ATTRIBUTE, null);
-                                    StyleConstants.setForeground(ignoreStyle, Color.darkGray);
-                                    StyleConstants.setUnderline(ignoreStyle, false);
-                                    textPane.getDocument().insertString(wordStart, selectedWord, ignoreStyle);
+                                    Position pos = textPane.getDocument().createPosition(wordStart);
+                                    ignoredWordList.add(new IgnoredWord(selectedWord, pos));
+//
+//
+//                                    // 先删除选中的单词
+//                                    textPane.getDocument().remove(wordStart, wordEnd - wordStart);
+//
+//                                    // 重新插入该单词，并应用特殊样式
+//                                    Style ignoreStyle = textPane.addStyle(IGNORE_ONCE_ATTRIBUTE, null);
+//                                    StyleConstants.setForeground(ignoreStyle, Color.darkGray);
+//                                    StyleConstants.setUnderline(ignoreStyle, false);
+//                                    textPane.getDocument().insertString(wordStart, selectedWord, ignoreStyle);
 
 
                                     // 重新进行拼写检查
@@ -286,7 +294,10 @@ Sizr
 
             // Check if the word contains only alphabetic characters
 
-            if (word.matches("^[a-zA-Z]+$") && !ignoredWords.contains(word.toLowerCase())) {
+
+
+
+            if (word.matches("^[a-zA-Z]+$") && !ignoredWords.contains(word.toLowerCase()) && !isWordIgnored(word, wordStart)) {
                     // Determine if the word is mixed case or improperly capitalized
                     boolean isMixedCase = !word.equals(word.toLowerCase())
                             && !word.equals(word.toUpperCase())
@@ -357,6 +368,17 @@ Sizr
             JOptionPane.showMessageDialog(frame, "Fail to save the file.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    private boolean isWordIgnored(String word, int startOffset) {
+        for (IgnoredWord ignoredWord : ignoredWordList) {
+            if (ignoredWord.getWord().equalsIgnoreCase(word) &&
+                    ignoredWord.getPosition().getOffset() == startOffset) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
