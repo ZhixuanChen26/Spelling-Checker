@@ -1,4 +1,7 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -13,7 +16,7 @@ import java.util.List;
 public class TextEditorGUI {
     private JFrame frame;
     private JTextPane textPane;
-    private JButton OpenButton, CheckButton, ExitButton, SaveButton;
+    private JButton OpenButton, CheckButton, ExitButton, SaveButton, HelpButton;
     private JScrollPane scrollPane;
     private JFileChooser fileChooser;
     private SysDictionary legalDic;
@@ -25,14 +28,21 @@ public class TextEditorGUI {
 
     private List<IgnoredWord> ignoredWordList = new ArrayList<>();
 
+    private String originalContent = "";
+
+    private int countMisspellings;
+    private int countCapitalizationErrors;
+    private int countDoubleWords;
+
+    private int countCharacters = 0;
+    private int countLines = 0;
+    private int countWords = 0;
+
 
 
 
     public TextEditorGUI() {
 
-        /*
-        Sizr
-         */
         legalDic = new SysDictionary("words_alpha.txt");
 
         frame = new JFrame("Text Editor");
@@ -46,32 +56,35 @@ public class TextEditorGUI {
         CheckButton = new JButton("Check");
         ExitButton = new JButton("Exit");
         SaveButton = new JButton("Save");
+        HelpButton = new JButton("Help");
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OpenButton);
         buttonPanel.add(CheckButton);
         buttonPanel.add(ExitButton);
         buttonPanel.add(SaveButton);
+        buttonPanel.add(HelpButton);
 
         frame.add(buttonPanel, BorderLayout.NORTH);
         frame.add(scrollPane, BorderLayout.CENTER);
 
 
-
         fileChooser = new JFileChooser();
+
+
         setupContextMenu();
         OpenButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int returnValue = fileChooser.showOpenDialog(frame);
                 //我们在这里把arraylist重新进行更新
-                ignoredWords = new ArrayList<>();
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     Path selectedFile = fileChooser.getSelectedFile().toPath();
                     currentFile = fileChooser.getSelectedFile();
                     try {
                         String content = new String(Files.readAllBytes(selectedFile));
                         textPane.setText(content);
+                        originalContent = textPane.getText();
                     } catch (Exception exp) {
                         exp.printStackTrace();
                     }
@@ -83,22 +96,84 @@ public class TextEditorGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 highlightMisspelledWords();
+                calculateStatistics();
+
+                JOptionPane.showMessageDialog(frame,
+                        "Document Statistics:\n" +
+                                "Characters: " + countCharacters + "\n" +
+                                "Lines: " + countLines + "\n" +
+                                "Words: " + countWords + "\n" +
+                                "Misspellings: " + countMisspellings + "\n" +
+                                "Capitalization Errors: " + countCapitalizationErrors + "\n" +
+                                "Double Words: " + countDoubleWords,
+                        "Statistics", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
         ExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                frame.dispose();
+                if (!textPane.getText().equals(originalContent)) {
+                    int result = JOptionPane.showConfirmDialog(frame,
+                            "You have unsaved changes. Are you sure you want to exit?",
+                            "Exit Confirmation",
+                            JOptionPane.YES_NO_OPTION);
+
+                    if (result == JOptionPane.YES_OPTION) {
+                        frame.dispose();
+                    }
+                } else {
+                    originalContent = "";
+                    frame.dispose();
+                }
             }
         });
 
         SaveButton.addActionListener(new ActionListener() {
-            @Override
             public void actionPerformed(ActionEvent e) {
-                saveTextToFile(currentFile);
+                JFileChooser saveChooser = new JFileChooser();
+                if (currentFile != null) {
+                    saveChooser.setSelectedFile(currentFile);
+                }
+                saveChooser.setFileFilter(new FileNameExtensionFilter("Text Files",".txt"));
+
+                int returnValue = saveChooser.showSaveDialog(frame);
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    File fileToSave = saveChooser.getSelectedFile();
+                    // 确保文件有正确的扩展名
+                    if (!fileToSave.getName().endsWith(".txt")) {
+                        fileToSave = new File(fileToSave.getAbsolutePath() + ".txt");
+                    }
+                    saveTextToFile(fileToSave);
+                    originalContent = "";
+                }
             }
         });
+
+        HelpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JDialog helpDialog = new JDialog(frame, "Help", false);
+                JTextArea helpTextArea = new JTextArea(10, 30);
+                helpTextArea.setText(
+                        "File Selector: Open a text file.\n" +
+                                "Check: Check the text for spelling and other errors.\n" +
+                                "Save: Save the current text to a file.\n" +
+                                "Exit: Exit the application.\n\n" +
+                                "Right-click on words for more options."
+                );
+                helpTextArea.setEditable(false);
+                helpTextArea.setWrapStyleWord(true);
+                helpTextArea.setLineWrap(true);
+
+                JScrollPane helpScrollPane = new JScrollPane(helpTextArea);
+                helpDialog.add(helpScrollPane);
+                helpDialog.pack();
+                helpDialog.setLocationRelativeTo(frame);
+                helpDialog.setVisible(true);
+            }
+        });
+
     }
 
     private void setupContextMenu() {
@@ -111,6 +186,12 @@ public class TextEditorGUI {
                         int wordStart = Utilities.getWordStart(textPane, offset);
                         int wordEnd = Utilities.getWordEnd(textPane, offset);
                         String selectWord = textPane.getDocument().getText(wordStart, wordEnd - wordStart);
+
+                        AttributeSet attrs = textPane.getStyledDocument().getCharacterElement(wordStart).getAttributes();
+
+                        boolean hasRedStyle = StyleConstants.getForeground(attrs).equals(Color.RED);
+                        boolean hasBlueStyle = StyleConstants.getForeground(attrs).equals(Color.BLUE);
+                        boolean hasGreenStyle = StyleConstants.getForeground(attrs).equals(Color.GREEN);
 
                         // Use the method in SysDictionary to generate suggestions for selected word
                         List<String> suggestions;
@@ -145,7 +226,6 @@ public class TextEditorGUI {
 
                         // Create the parent(main) menu and add sub menu to main menu
                         JPopupMenu parentMenu = new JPopupMenu();
-                        parentMenu.add(suggestionsMenu);
 
                         // Create 'Add to Dictionary' menu item
                         JMenuItem addToDicItem = new JMenuItem("Add to Dictionary");
@@ -153,7 +233,6 @@ public class TextEditorGUI {
                             // Add the selected word to the user dictionary
                             userDic.add(selectWord);
                         });
-                        parentMenu.add(addToDicItem);
 /*
 Sizr
  */
@@ -179,7 +258,6 @@ Sizr
                                 }
                             }
                         });
-                        parentMenu.add(deleteItem);
 
                         JMenuItem ignoreAllItem = new JMenuItem("Ignore All");
                         ignoreAllItem.addActionListener(new ActionListener() {
@@ -197,7 +275,6 @@ Sizr
                                 }
                             }
                         });
-                        parentMenu.add(ignoreAllItem);
 
                         JMenuItem ignoreOnceItem = new JMenuItem("Ignore Once");
                         ignoreOnceItem.addActionListener(new ActionListener() {
@@ -231,12 +308,16 @@ Sizr
                             }
                         });
 
+                        if(hasBlueStyle || hasRedStyle){
+                            parentMenu.add(suggestionsMenu);
+                            parentMenu.add(addToDicItem);
+                        }
+
+
+                        parentMenu.add(deleteItem);
                         parentMenu.add(ignoreOnceItem);
+                        parentMenu.add(ignoreAllItem);
 
-
-/*
-Sizr
- */
                         // Show the context menu
                         parentMenu.show(textPane, e.getX(), e.getY());
                     } catch (BadLocationException ex) {
@@ -248,6 +329,10 @@ Sizr
     }
 
     private void highlightMisspelledWords() {
+        countMisspellings = 0;
+        countCapitalizationErrors = 0;
+        countDoubleWords = 0;
+
         // Retrieve the document from the text pane for styling
         StyledDocument doc = textPane.getStyledDocument();
         String text = textPane.getText();
@@ -311,18 +396,21 @@ Sizr
                     if (!legalDic.hasWord(word.toLowerCase()) && !userDic.hasWord(word)) {
                         int length = word.length();
                         doc.setCharacterAttributes(idx, length, redStyle, false);
+                        countMisspellings ++;
                     }
 
                     // Apply blue underline style for capitalization errors
                     if (isMixedCase || isStartOfSentenceError) {
                         int length = word.length();
                         doc.setCharacterAttributes(idx, length, blueStyle, false);
+                        countCapitalizationErrors++;
                     }
 
                     // Highlight double words in green
                     if (word.equalsIgnoreCase(prev) && !isDiffSentence) {
                         int length = word.length();
                         doc.setCharacterAttributes(idx, length, greenStyle, false);
+                        countDoubleWords++;
                     }
                 }
 
@@ -378,6 +466,27 @@ Sizr
         }
         return false;
     }
+
+    private void calculateStatistics() {
+        String text = textPane.getText();
+        countLines = calculateVisualLines(textPane); // 计算视觉上的行数
+        countWords = text.split("\\s+").length;
+        String textWithoutNewLines = text.replaceAll("\r\n|\r|\n", "");
+        countCharacters = textWithoutNewLines.length(); // 计算不包括换行符的字符数
+    }
+
+    private int calculateVisualLines(JTextPane textPane) {
+        View rootView = textPane.getUI().getRootView(textPane).getView(0);
+        int totalLines = 0;
+
+        for (int i = 0; i < rootView.getViewCount(); i++) {
+            View lineView = rootView.getView(i);
+            totalLines += lineView.getViewCount();
+        }
+
+        return totalLines;
+    }
+
 
 
     public static void main(String[] args) {
