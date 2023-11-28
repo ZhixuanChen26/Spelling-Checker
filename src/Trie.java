@@ -1,3 +1,13 @@
+/**
+ * Represents a Trie data structure for efficient storage and retrieval of strings.
+ * This implementation provides functionality for inserting words, checking if a word exists,
+ * and suggesting corrections for misspelled words.
+ *
+ * @author Yi Ran, Zirui Si, Jingwen Liu, Zhixuan Chen, Yuyang Zhou
+ * @version 1.2
+ * @since 2023-10-30
+ */
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -6,11 +16,18 @@ import java.util.Set;
 public class Trie {
     private TrieNode root;
 
+    /**
+     * Constructor for Trie class. Initializes the root node.
+     */
     public Trie() {
         root = new TrieNode();
     }
 
-    // Function to insert a word into the trie. this is the function that will construct the tree
+    /**
+     * Inserts a word into the trie.
+     *
+     * @param word The word to be inserted into the trie.
+     */
     public void insert(String word) {
         TrieNode node = root;
         for (char c : word.toCharArray()) {
@@ -22,7 +39,12 @@ public class Trie {
         node.setEndOfWord(true);
     }
 
-    // Function to check if a word exists in the trie.
+    /**
+     * Checks if a word exists in the trie.
+     *
+     * @param word The word to be checked.
+     * @return boolean True if the word exists in the trie, false otherwise.
+     */
     public boolean contains(String word) {
         TrieNode node = root;
         for (char c : word.toCharArray()) {
@@ -34,7 +56,13 @@ public class Trie {
         return node.isEndOfWord();
     }
 
-    // Function to suggest corrections for a misspelled word.
+    /**
+     * Suggests possible corrections for a misspelled word.
+     * This method generates suggestions by removing, replacing, and inserting characters.
+     *
+     * @param misspelledWord The misspelled word for which to suggest corrections.
+     * @return List<String> A list of possible corrections.
+     */
     public List<String> suggestCorrections(String misspelledWord) {
         Set<String> suggestions = new HashSet<>(); // Use HashSet to avoid duplicates in the suggestions
 
@@ -83,15 +111,32 @@ public class Trie {
 
         return new ArrayList<>(suggestions); // return it as a List
     }
-    /*
-    // Function to suggest corrections for a misspelled word.
-    public List<String> suggestCorrections(String misspelledWord) {
+
+    /**
+     * Generates suggestions for a misspelled word using a depth-first search (DFS) approach in the Trie.
+     * This method provides a more sophisticated way of generating suggestions based on the Levenshtein distance algorithm.
+     * Note: This method was not applied in the final project but is kept here for potential future use or reference.
+     *
+     * @param misspelledWord The misspelled word for which to suggest corrections.
+     * @return List<String> A list of possible corrections limited to a maximum number.
+     */
+    public List<String> generateSuggestions(String misspelledWord) {
         List<String> suggestions = new ArrayList<>();
         suggestCorrectionsDFS(misspelledWord, root, "", suggestions, 2);
         return suggestions;
     }
 
-    // A helper method to traverse the Trie and give possible suggestions for misspelled word
+    /**
+     * A helper method to perform depth-first search (DFS) in the Trie for generating word suggestions.
+     * It recursively explores possible corrections based on the current path in the Trie and the distance constraint.
+     * Note: This method was not applied in the final project but is kept here for potential future use or reference.
+     *
+     * @param misspelledWord The misspelled word being corrected.
+     * @param node The current TrieNode being visited.
+     * @param currentStr The current string formed from the path in the Trie.
+     * @param suggestions The list of accumulated suggestions.
+     * @param maxDistance The maximum allowed Levenshtein distance for a suggestion to be considered valid.
+     */
     private void suggestCorrectionsDFS(String misspelledWord, TrieNode node, String currentStr,
                                        List<String> suggestions, int maxDistance)
     {
@@ -131,16 +176,23 @@ public class Trie {
         }
     }
 
-    // LevenshteinDistance is minimum edits needed to change 1 word into another
+    /**
+     * Calculates the Levenshtein distance between two strings.
+     * The Levenshtein distance is a measure of the minimum number of single-character edits
+     * (insertions, deletions, or substitutions) required to change one word into the other.
+     * Note: This method was not applied in the final project but is kept here for potential future use or reference.
+     *
+     * @param word1 The first word.
+     * @param word2 The second word.
+     * @return int The Levenshtein distance between the two words.
+     */
     private int getLevenshteinDistance(String word1, String word2) {
         int len1 = word1.length();
         int len2 = word2.length();
 
         // Base case: If either of the words reduce to empty string, the distance is the length of the other word.
         if (len1 == 0) return len2;
-
         if (len2 == 0) return len1;
-
 
         // If the last characters are the same, exclude char to reduce both words since last char has no effect on result
         if (word1.charAt(len1 - 1) == word2.charAt(len2 - 1)) {
@@ -154,5 +206,4 @@ public class Trie {
 
         return 1 + Math.min(insertion, Math.min(deletion, substitution));
     }
-     */
 }

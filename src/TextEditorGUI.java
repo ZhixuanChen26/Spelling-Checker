@@ -1,3 +1,14 @@
+/**
+ * A Graphical User Interface (GUI) for a text editor application.
+ * It provides functionalities for opening, editing, spell checking, and saving text files.
+ * Additional features include statistics about the text and highlighting of misspellings,
+ * capitalization errors, and double words.
+ *
+ * @author Yi Ran, Zirui Si, Jingwen Liu, Zhixuan Chen, Yuyang Zhou
+ * @version 1.14
+ * @since 2023-11-12
+ */
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -40,7 +51,9 @@ public class TextEditorGUI {
 
 
 
-
+    /**
+     * Constructor for TextEditorGUI. Initializes the GUI components and dictionaries.
+     */
     public TextEditorGUI() {
 
         legalDic = new SysDictionary("words_alpha.txt");
@@ -77,7 +90,7 @@ public class TextEditorGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int returnValue = fileChooser.showOpenDialog(frame);
-                //我们在这里把arraylist重新进行更新
+                //re-update the arrayList
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     Path selectedFile = fileChooser.getSelectedFile().toPath();
                     currentFile = fileChooser.getSelectedFile();
@@ -140,7 +153,7 @@ public class TextEditorGUI {
                 int returnValue = saveChooser.showSaveDialog(frame);
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     File fileToSave = saveChooser.getSelectedFile();
-                    // 确保文件有正确的扩展名
+                    // Ensure file's extension is correct
                     if (!fileToSave.getName().endsWith(".txt")) {
                         fileToSave = new File(fileToSave.getAbsolutePath() + ".txt");
                     }
@@ -176,6 +189,9 @@ public class TextEditorGUI {
 
     }
 
+    /**
+     * Sets up the context menu for the text pane with options like suggestions, ignore, delete etc.
+     */
     private void setupContextMenu() {
         textPane.addMouseListener(new MouseAdapter() {
             @Override
@@ -246,13 +262,13 @@ Sizr
                                     int wordStart = Utilities.getWordStart(textPane, offset);
                                     int wordEnd = Utilities.getWordEnd(textPane, offset);
                                     if (wordEnd < textPane.getDocument().getLength() && textPane.getText(wordEnd, 1).equals(" ")) {
-                                        wordEnd++; // 如果后面有空格，则将结束位置向后移动一个字符
+                                        wordEnd++; // if it has space after, move wordEnd further by 1
                                     } else if (wordStart > 0 && textPane.getText(wordStart - 1, 1).equals(" ")) {
-                                        wordStart--; // 如果后面没有空格，但前面有空格，则将开始位置向前移动一个字符
+                                        wordStart--; // if no space after but has space before, move wordStart backward by 1
                                     }
 
                                     textPane.getDocument().remove(wordStart, wordEnd - wordStart);
-                                    highlightMisspelledWords(); // 重新进行拼写检查
+                                    highlightMisspelledWords(); // Recheck the spelling
                                 } catch (BadLocationException ex) {
                                     ex.printStackTrace();
                                 }
@@ -269,7 +285,7 @@ Sizr
                                     int wordEnd = Utilities.getWordEnd(textPane, offset);
                                     String selectedWord = textPane.getDocument().getText(wordStart, wordEnd - wordStart);
                                     ignoredWords.add(selectedWord.toLowerCase());
-                                    highlightMisspelledWords(); // 重新进行拼写检查，忽略选中的单词
+                                    highlightMisspelledWords(); // Recheck spellings, ignore selected word
                                 } catch (BadLocationException ex) {
                                     ex.printStackTrace();
                                 }
@@ -290,17 +306,17 @@ Sizr
                                     ignoredWordList.add(new IgnoredWord(selectedWord, pos));
 //
 //
-//                                    // 先删除选中的单词
+//                                    // Delete selected word first
 //                                    textPane.getDocument().remove(wordStart, wordEnd - wordStart);
 //
-//                                    // 重新插入该单词，并应用特殊样式
+//                                    // Re-insert curr word and apply special style on it
 //                                    Style ignoreStyle = textPane.addStyle(IGNORE_ONCE_ATTRIBUTE, null);
 //                                    StyleConstants.setForeground(ignoreStyle, Color.darkGray);
 //                                    StyleConstants.setUnderline(ignoreStyle, false);
 //                                    textPane.getDocument().insertString(wordStart, selectedWord, ignoreStyle);
 
 
-                                    // 重新进行拼写检查
+                                    // Recheck spellings
                                     highlightMisspelledWords();
                                 } catch (BadLocationException ex) {
                                     ex.printStackTrace();
@@ -328,6 +344,9 @@ Sizr
         });
     }
 
+    /**
+     * Highlights misspelled words, capitalization errors, and double words in the text pane.
+     */
     private void highlightMisspelledWords() {
         countMisspellings = 0;
         countCapitalizationErrors = 0;
@@ -339,7 +358,7 @@ Sizr
 
 
 
-        // 重置整个文档的样式为 normalStyle
+        // reset entire text to normalStyle
         Style normalStyle = textPane.addStyle("NormalStyle", null);
         StyleConstants.setForeground(normalStyle, Color.BLACK);
         StyleConstants.setUnderline(normalStyle, false);
@@ -443,10 +462,18 @@ Sizr
 
     }
 
+    /**
+     * Makes the frame visible to display the GUI.
+     */
     private void display() {
         frame.setVisible(true);
     }
 
+    /**
+     * Saves the current text from the JTextPane to a specified file.
+     *
+     * @param file The file to save the text to.
+     */
     private void saveTextToFile(File file) {
         String content = textPane.getText(); // Get the current state of text from JTextPane
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -457,6 +484,13 @@ Sizr
         }
     }
 
+    /**
+     * Checks if a given word at a specific position is in the list of ignored words.
+     *
+     * @param word The word to check.
+     * @param startOffset The starting offset of the word in the document.
+     * @return boolean True if the word is ignored, false otherwise.
+     */
     private boolean isWordIgnored(String word, int startOffset) {
         for (IgnoredWord ignoredWord : ignoredWordList) {
             if (ignoredWord.getWord().equalsIgnoreCase(word) &&
@@ -467,14 +501,23 @@ Sizr
         return false;
     }
 
+    /**
+     * Calculates statistics like the number of characters, lines, and words in the text pane.
+     */
     private void calculateStatistics() {
         String text = textPane.getText();
-        countLines = calculateVisualLines(textPane); // 计算视觉上的行数
+        countLines = calculateVisualLines(textPane); // Count how many lines
         countWords = text.split("\\s+").length;
         String textWithoutNewLines = text.replaceAll("\r\n|\r|\n", "");
-        countCharacters = textWithoutNewLines.length(); // 计算不包括换行符的字符数
+        countCharacters = textWithoutNewLines.length(); // Count chars excluding \n
     }
 
+    /**
+     * Calculates the number of visual lines in a JTextPane.
+     *
+     * @param textPane The JTextPane to calculate lines for.
+     * @return int The number of visual lines.
+     */
     private int calculateVisualLines(JTextPane textPane) {
         View rootView = textPane.getUI().getRootView(textPane).getView(0);
         int totalLines = 0;
@@ -487,8 +530,11 @@ Sizr
         return totalLines;
     }
 
-
-
+    /**
+     * The main method to run the application.
+     *
+     * @param args Command line arguments (not used).
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new TextEditorGUI().display();
