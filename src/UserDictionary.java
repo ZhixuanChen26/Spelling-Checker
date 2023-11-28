@@ -1,12 +1,3 @@
-/**
- * Manages a user-defined dictionary, allowing for the addition and removal of words.
- * This dictionary is stored in a file and is loaded upon initialization of the class.
- *
- * @author Yi Ran, Zirui Si
- * @version 1.1
- * @since 2023-10-30
- */
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +6,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Manages a user-defined dictionary, allowing for the addition and removal of words.
+ * This dictionary is stored in a file and is loaded upon initialization of the class.
+ *
+ * @author Yi Ran, Zirui Si
+ * @version 1.1
+ * @since 2023-10-30
+ */
 public class UserDictionary {
     private HashSet<String> userWords;
     private String filePath = "userDictionary.txt"; // Path to the file where user defined legit words are stored

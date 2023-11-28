@@ -1,3 +1,8 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
 /**
  * Represents a system dictionary utilizing a Trie data structure for efficient word storage and retrieval.
  * This class provides functionalities to construct a dictionary from a file, add words to the dictionary,
@@ -7,12 +12,6 @@
  * @version 1.1
  * @since 2023-10-30
  */
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-
 public class SysDictionary {
 
     private Trie trie;
@@ -67,7 +66,7 @@ public class SysDictionary {
      * Suggests possible corrections for a misspelled word by querying the Trie.
      *
      * @param misspelled The misspelled word for which to suggest corrections.
-     * @return List<String> A list of possible corrections.
+     * @return A list of possible corrections.
      */
     public List<String> suggestCorrections(String misspelled) {
         return trie.suggestCorrections(misspelled);

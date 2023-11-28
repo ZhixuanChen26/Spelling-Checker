@@ -1,3 +1,8 @@
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Represents a Trie data structure for efficient storage and retrieval of strings.
  * This implementation provides functionality for inserting words, checking if a word exists,
@@ -7,12 +12,6 @@
  * @version 1.2
  * @since 2023-10-30
  */
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class Trie {
     private TrieNode root;
 
@@ -61,7 +60,7 @@ public class Trie {
      * This method generates suggestions by removing, replacing, and inserting characters.
      *
      * @param misspelledWord The misspelled word for which to suggest corrections.
-     * @return List<String> A list of possible corrections.
+     * @return A list of possible corrections.
      */
     public List<String> suggestCorrections(String misspelledWord) {
         Set<String> suggestions = new HashSet<>(); // Use HashSet to avoid duplicates in the suggestions
@@ -118,7 +117,8 @@ public class Trie {
      * Note: This method was not applied in the final project but is kept here for potential future use or reference.
      *
      * @param misspelledWord The misspelled word for which to suggest corrections.
-     * @return List<String> A list of possible corrections limited to a maximum number.
+     * @return A list of possible corrections limited to a maximum number.
+     * @deprecated
      */
     public List<String> generateSuggestions(String misspelledWord) {
         List<String> suggestions = new ArrayList<>();
@@ -136,6 +136,7 @@ public class Trie {
      * @param currentStr The current string formed from the path in the Trie.
      * @param suggestions The list of accumulated suggestions.
      * @param maxDistance The maximum allowed Levenshtein distance for a suggestion to be considered valid.
+     * @deprecated
      */
     private void suggestCorrectionsDFS(String misspelledWord, TrieNode node, String currentStr,
                                        List<String> suggestions, int maxDistance)
@@ -185,6 +186,7 @@ public class Trie {
      * @param word1 The first word.
      * @param word2 The second word.
      * @return int The Levenshtein distance between the two words.
+     * @deprecated
      */
     private int getLevenshteinDistance(String word1, String word2) {
         int len1 = word1.length();

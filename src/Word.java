@@ -4,6 +4,7 @@
  *
  * @author Yi Ran
  * @version 1.0
+ * @deprecated
  * @since 2023-10-30
  */
 

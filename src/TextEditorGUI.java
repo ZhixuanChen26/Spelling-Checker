@@ -1,14 +1,3 @@
-/**
- * A Graphical User Interface (GUI) for a text editor application.
- * It provides functionalities for opening, editing, spell checking, and saving text files.
- * Additional features include statistics about the text and highlighting of misspellings,
- * capitalization errors, and double words.
- *
- * @author Yi Ran, Zirui Si, Jingwen Liu, Zhixuan Chen, Yuyang Zhou
- * @version 1.14
- * @since 2023-11-12
- */
-
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -24,6 +13,17 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+
+/**
+ * A Graphical User Interface (GUI) for a text editor application.
+ * It provides functionalities for opening, editing, spell checking, and saving text files.
+ * Additional features include statistics about the text and highlighting of misspellings,
+ * capitalization errors, and double words.
+ *
+ * @author Yi Ran, Zirui Si, Jingwen Liu, Zhixuan Chen, Yuyang Zhou
+ * @version 1.14
+ * @since 2023-11-12
+ */
 public class TextEditorGUI {
     private JFrame frame;
     private JTextPane textPane;

@@ -1,3 +1,6 @@
+import javax.swing.text.Position;
+import java.util.Objects;
+
 /**
  * Represents a word that is ignored in the spell checking process, along with its position in the document.
  * This class is used to track words that are to be ignored once during spell checking.
@@ -6,10 +9,6 @@
  * @version 1.0
  * @since 2023-11-25
  */
-
-import javax.swing.text.Position;
-import java.util.Objects;
-
 public class IgnoredWord {
     String word;
     Position position;
