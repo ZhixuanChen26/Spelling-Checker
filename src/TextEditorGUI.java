@@ -1,6 +1,4 @@
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.*;
 import java.awt.*;
@@ -11,7 +9,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -41,6 +38,8 @@ public class TextEditorGUI {
 
     private String originalContent = "";
 
+    private boolean saved = false;
+
     private int countMisspellings;
     private int countCapitalizationErrors;
     private int countDoubleWords;
@@ -56,11 +55,21 @@ public class TextEditorGUI {
      */
     public TextEditorGUI() {
 
+
         legalDic = new SysDictionary("words_alpha.txt");
 
+
+
         frame = new JFrame("Text Editor");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 800);
+
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                performExitAction();
+            }
+        });
 
         textPane = new JTextPane();
         scrollPane = new JScrollPane(textPane);
@@ -90,21 +99,35 @@ public class TextEditorGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int returnValue = fileChooser.showOpenDialog(frame);
-                //re-update the arrayList
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    Path selectedFile = fileChooser.getSelectedFile().toPath();
-                    currentFile = fileChooser.getSelectedFile();
+                    File selectedFile = fileChooser.getSelectedFile();
+                    long fileSize = selectedFile.length();
+                    long maxFileSize = 50 * 1024 * 1024; // 50MB in bytes
+
+                    if (fileSize > maxFileSize) {
+                        JOptionPane.showMessageDialog(frame, "The selected file is too large. Please select a file smaller than 50MB.", "File Too Large", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    currentFile = selectedFile;
+                    Path selectedFilePath = selectedFile.toPath();
                     try {
-                        String content = new String(Files.readAllBytes(selectedFile));
-                        textPane.setText(content);
-                        originalContent = textPane.getText();
+                        byte[] fileContentBytes = Files.readAllBytes(selectedFilePath);
+                        String content = new String(fileContentBytes);
+
+                        if (isAsciiText(fileContentBytes)) {
+                            textPane.setText(content);
+                            originalContent = textPane.getText();
+                            saved = false;
+                        } else {
+                            JOptionPane.showMessageDialog(frame, "The selected file is not a valid ASCII text file. Please select a different file.", "Invalid File Type", JOptionPane.ERROR_MESSAGE);
+                        }
                     } catch (Exception exp) {
                         exp.printStackTrace();
                     }
                 }
             }
         });
-
         CheckButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -126,19 +149,7 @@ public class TextEditorGUI {
         ExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!textPane.getText().equals(originalContent)) {
-                    int result = JOptionPane.showConfirmDialog(frame,
-                            "You have unsaved changes. Are you sure you want to exit?",
-                            "Exit Confirmation",
-                            JOptionPane.YES_NO_OPTION);
-
-                    if (result == JOptionPane.YES_OPTION) {
-                        frame.dispose();
-                    }
-                } else {
-                    originalContent = "";
-                    frame.dispose();
-                }
+                performExitAction();
             }
         });
 
@@ -158,6 +169,7 @@ public class TextEditorGUI {
                         fileToSave = new File(fileToSave.getAbsolutePath() + ".txt");
                     }
                     saveTextToFile(fileToSave);
+                    saved = true;
                     originalContent = "";
                 }
             }
@@ -189,6 +201,22 @@ public class TextEditorGUI {
 
     }
 
+    private void performExitAction() {
+        if (!saved && !textPane.getText().equals(originalContent)) {
+            int result = JOptionPane.showConfirmDialog(frame,
+                    "You have unsaved changes. Are you sure you want to exit?",
+                    "Exit Confirmation",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (result == JOptionPane.YES_OPTION) {
+                frame.dispose();
+            }
+        } else {
+            originalContent = "";
+            frame.dispose();
+        }
+    }
+
     /**
      * Sets up the context menu for the text pane with options like suggestions, ignore, delete etc.
      */
@@ -213,6 +241,16 @@ public class TextEditorGUI {
                         List<String> suggestions;
                         if (!legalDic.hasWord(selectWord.toLowerCase())) {
                             suggestions = legalDic.suggestCorrections(selectWord.toLowerCase());
+                            for (int i = 1; i < selectWord.length() - 1; i++) {
+                                String firstPart = selectWord.substring(0, i);
+                                String secondPart = selectWord.substring(i);
+
+                                if (firstPart.length() >= 2 && secondPart.length() >= 2) {
+                                    if (legalDic.hasWord(firstPart.toLowerCase()) && legalDic.hasWord(secondPart.toLowerCase())) {
+                                        suggestions.add(firstPart + "-" + secondPart);
+                                    }
+                                }
+                            }
                         } else {
                             suggestions = new ArrayList<>();
                             StringBuilder sb = new StringBuilder(selectWord.length());
@@ -248,6 +286,7 @@ public class TextEditorGUI {
                         addToDicItem.addActionListener(ae -> {
                             // Add the selected word to the user dictionary
                             userDic.add(selectWord);
+                            highlightMisspelledWords();
                         });
 /*
 Sizr
@@ -419,14 +458,14 @@ Sizr
                     }
 
                     // Apply blue underline style for capitalization errors
-                    if (isMixedCase || isStartOfSentenceError) {
+                    if ((isMixedCase || isStartOfSentenceError) && !userDic.hasWord(word)) {
                         int length = word.length();
                         doc.setCharacterAttributes(idx, length, blueStyle, false);
                         countCapitalizationErrors++;
                     }
 
                     // Highlight double words in green
-                    if (word.equalsIgnoreCase(prev) && !isDiffSentence) {
+                    if ((word.equalsIgnoreCase(prev) && !isDiffSentence) && !userDic.hasWord(word)) {
                         int length = word.length();
                         doc.setCharacterAttributes(idx, length, greenStyle, false);
                         countDoubleWords++;
@@ -511,6 +550,18 @@ Sizr
         String textWithoutNewLines = text.replaceAll("\r\n|\r|\n", "");
         countCharacters = textWithoutNewLines.length(); // Count chars excluding \n
     }
+
+    private boolean isAsciiText(byte[] data) {
+        int nonAscii = 0;
+        for (byte b : data) {
+            if (b < 0) { // 在 ASCII 中，没有字节应该是负的
+                nonAscii++;
+            }
+        }
+        double nonAsciiPercentage = 100.0 * nonAscii / data.length;
+        return nonAsciiPercentage < 10; // 允许最多 10% 的非 ASCII 字符
+    }
+
 
     /**
      * Calculates the number of visual lines in a JTextPane.
