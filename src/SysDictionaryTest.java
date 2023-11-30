@@ -5,7 +5,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Used to test UserDictionary.java
+ * Used to test SysDictionary.java
  * @author Zhixuan Chen
  * @version 1.0
  * @since 2023-11-22
