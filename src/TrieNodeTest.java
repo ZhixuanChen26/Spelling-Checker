@@ -1,5 +1,13 @@
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Used to test TrieNode.java
+ *
+ * @authorJingwen Liu
+ * @version 1.0
+ * @since 2023-11-20
+ */
+
 class TrieNodeTest {
    /**
      * Tests whether the hasChild method correctly identifies the presence of a child node.
