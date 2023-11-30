@@ -5,6 +5,7 @@ import javax.swing.text.Position;
 import static org.junit.jupiter.api.Assertions.*;
 
 class IgnoredWordTest {
+    // Creates a mock Position object with a specified offset
 
     private Position createMockPosition(int offset) {
         return new Position() {
@@ -37,7 +38,8 @@ class IgnoredWordTest {
         ignoredWord.setPosition(position2);
         assertEquals(position2, ignoredWord.getPosition(), "getPosition should return the updated position");
     }
-
+// Tests both the getter and setter for the 'word' field
+    @Test
     @Test
     void testEquals() {
         Position position = createMockPosition(0);
@@ -48,12 +50,14 @@ class IgnoredWordTest {
         assertEquals(word1, word2, "Two IgnoredWord objects with the same word and position should be equal");
         assertNotEquals(word1, word3, "IgnoredWord objects with different words should not be equal");
     }
+    // Tests the consistency of the hashCode implementation
 
     @Test
     void testHashCode() {
         Position position = createMockPosition(0);
         IgnoredWord word1 = new IgnoredWord("test", position);
         IgnoredWord word2 = new IgnoredWord("test", position);
+        // Asserts that two identical IgnoredWord objects have the same hash code
 
         assertEquals(word1.hashCode(), word2.hashCode(), "Hash codes of two identical IgnoredWord objects should be the same");
     }
