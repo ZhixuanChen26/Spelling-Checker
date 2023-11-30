@@ -4,6 +4,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Used to test Trie.java
+ *
+ * @authorJingwen Liu
+ * @version 1.0
+ * @since 2023-11-20
+ */
+
 class TrieTest {
     /**
      * Test the insert and contains methods of the Trie.
