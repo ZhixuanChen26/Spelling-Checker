@@ -4,8 +4,19 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SysDictionaryTest {
+/**
+ * Used to test UserDictionary.java
+ * @author Zhixuan Chen
+ * @version 1.0
+ * @since 2023-11-22
+ */
 
+class SysDictionaryTest {
+  
+    /**
+     * Tests the addWord and hasWord methods of SysDictionary.
+     * It adds a list of words to the dictionary and then checks if each word has been successfully added.
+     */
     @Test
     void addWordAndHasWord() {
         SysDictionary sysDict = new SysDictionary("words_alpha.txt"); // Assume this is a valid file path
@@ -19,7 +30,11 @@ class SysDictionaryTest {
             assertTrue(sysDict.hasWord(word), "Dictionary should contain '" + word + "' after addition");
         }
     }
-
+  
+    /**
+     * Tests the suggestCorrections method of SysDictionary.
+     * It adds some words and then checks if the suggested corrections for a misspelled word are accurate.
+     */
     @Test
     void suggestCorrections() {
         SysDictionary sysDict = new SysDictionary("words_alpha.txt"); // Assume this is a valid file path
