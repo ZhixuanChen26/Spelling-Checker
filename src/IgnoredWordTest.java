@@ -5,8 +5,12 @@ import javax.swing.text.Position;
 import static org.junit.jupiter.api.Assertions.*;
 
 class IgnoredWordTest {
-    // Creates a mock Position object with a specified offset
-
+    /**
+      *Creates a mock Position object with a specified offset
+      * @author yuyang zhou
+	  * @version 1.1
+	  * @since 2023-11-30
+	*/
     private Position createMockPosition(int offset) {
         return new Position() {
             @Override
@@ -38,7 +42,11 @@ class IgnoredWordTest {
         ignoredWord.setPosition(position2);
         assertEquals(position2, ignoredWord.getPosition(), "getPosition should return the updated position");
     }
-// Tests both the getter and setter for the 'word' field
+	/** Tests both the getter and setter for the 'word' field'
+      * @author yuyang zhou
+	  * @version 1.1
+	  * @since 2023-11-30
+	*/
     @Test
     @Test
     void testEquals() {
@@ -50,7 +58,11 @@ class IgnoredWordTest {
         assertEquals(word1, word2, "Two IgnoredWord objects with the same word and position should be equal");
         assertNotEquals(word1, word3, "IgnoredWord objects with different words should not be equal");
     }
-    // Tests the consistency of the hashCode implementation
+    /**Tests the consistency of the hashCode implementation
+      * @author yuyang zhou
+	  * @version 1.1
+	  * @since 2023-11-30
+	*/
 
     @Test
     void testHashCode() {
