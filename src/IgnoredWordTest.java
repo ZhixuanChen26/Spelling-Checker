@@ -47,7 +47,7 @@ class IgnoredWordTest {
 	  * @version 1.1
 	  * @since 2023-11-30
 	*/
-    @Test
+    
     @Test
     void testEquals() {
         Position position = createMockPosition(0);
