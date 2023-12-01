@@ -554,12 +554,12 @@ Sizr
     private boolean isAsciiText(byte[] data) {
         int nonAscii = 0;
         for (byte b : data) {
-            if (b < 0) { // 在 ASCII 中，没有字节应该是负的
+            if (b < 0) { // in ASCII, no byte should be negative.
                 nonAscii++;
             }
         }
         double nonAsciiPercentage = 100.0 * nonAscii / data.length;
-        return nonAsciiPercentage < 10; // 允许最多 10% 的非 ASCII 字符
+        return nonAsciiPercentage < 10; // Allow up to 10% non-ASCII characters.
     }
 
 
