@@ -1,6 +1,6 @@
 # Spell Checker Project
 
-## Overview
+### Overview
 The **Spell Checker Project** is a standalone desktop application designed to help users identify and correct spelling errors in text documents. The application features a user-friendly interface, allowing users to manually or automatically correct mistakes with ease.
 
 ## Features
