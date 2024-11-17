@@ -17,7 +17,7 @@ This project is a standalone desktop application designed to help users identify
 5. Javadoc Documentation**: For the Javadoc comments created for the project, see them in each class's code (test classes don't have Javadoc comments), or browse on a website by clicking index.html in the folder.
 
 ## Notes
-- The test case in TrieTest for `suggestCorrections` will fail because we cannot construct the tree in Trie.java; it must be constructed in the upper layer (SysDictionary.java). Thus, the test fails because an empty tree cannot provide suggestions.
+- The test case in TrieTest for suggestCorrections will fail because we cannot construct the tree in Trie.java; it must be constructed in the upper layer (SysDictionary.java). Thus, the test fails because an empty tree cannot provide suggestions.
 - If you change the location of words_alpha.txt and userDictionary.txt, you need to re-enter the path; otherwise, the system cannot find them.
 - Use sample.txt to test the spell checker. Select it through the "File selector" button in the GUI.
 
